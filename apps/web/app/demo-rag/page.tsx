@@ -1,0 +1,1 @@
+﻿import { PageShell } from '@/components/layout/PageShell'; import { TopBar } from '@/components/layout/TopBar'; export default function Page() { return ( <PageShell><TopBar title="demo-rag" description="Coming in the next phase." /></PageShell> ); }

@@ -1,0 +1,28 @@
+"""
+Structured logging configuration.
+Uses Python's standard logging with a format suitable for log aggregation.
+"""
+import logging
+import sys
+
+
+def configure_logging(debug: bool = False) -> None:
+    level = logging.DEBUG if debug else logging.INFO
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(
+        logging.Formatter(
+            fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%dT%H:%M:%S",
+        )
+    )
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(handler)
+    root.setLevel(level)
+
+    # Quiet noisy third-party loggers
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
+
+logger = logging.getLogger("agentops")
