@@ -9,6 +9,26 @@ export interface PromptVersionRead {
   is_active: boolean;
 }
 
+// Per-side result inside a comparison
+export interface CompareResultItem {
+  prompt_version: string;
+  mock_answer: string;
+  groundedness: number;
+  answer_completeness: number;
+}
+
+// Full A/B comparison result (API response from POST /regression/{id}/compare)
+export interface CompareResult {
+  case_id: string;
+  prompt_version_a: string;
+  prompt_version_b: string;
+  result_a: CompareResultItem;
+  result_b: CompareResultItem;
+  winner: "a" | "b" | "tie" | null;
+  comparison_method: string;
+  notes: string | null;
+}
+
 export interface RegressionCaseRead {
   id: string;
   created_at: string;
@@ -20,5 +40,6 @@ export interface RegressionCaseRead {
   source_trace_id: string | null;
   prompt_version_a: string | null;
   prompt_version_b: string | null;
-  comparison_result: Record<string, unknown> | null;
+  // Typed strictly — null until a comparison is run
+  comparison_result: CompareResult | null;
 }

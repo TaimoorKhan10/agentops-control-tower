@@ -9,11 +9,12 @@ import type { DashboardMetrics } from "@/types/metrics";
 import type { TraceRead, TraceListResponse, TraceFilters } from "@/types/trace";
 import type { EvaluationRead } from "@/types/evaluation";
 import type { ReviewRead, PendingReviewItem } from "@/types/review";
-import type { RegressionCaseRead } from "@/types/regression";
+import type { RegressionCaseRead, CompareResult } from "@/types/regression";
 import type { PromptVersionRead } from "@/types/regression";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
+  "http://localhost:8000";
 
 // ---------------------------------------------------------------------------
 // Core fetch wrapper
@@ -61,23 +62,32 @@ export const tracesApi = {
     const qs = params.toString();
     return apiFetch<TraceListResponse>(`/traces${qs ? `?${qs}` : ""}`);
   },
-  get: (id: string): Promise<TraceRead> =>
-    apiFetch<TraceRead>(`/traces/${id}`),
+  get: (id: string): Promise<TraceRead> => apiFetch<TraceRead>(`/traces/${id}`),
 };
 
 // ---------------------------------------------------------------------------
 // Evaluations
 // ---------------------------------------------------------------------------
 export const evaluationsApi = {
-  list: (params?: { hallucination_risk?: string; page?: number }): Promise<EvaluationRead[]> => {
+  list: (params?: {
+    hallucination_risk?: string;
+    page?: number;
+  }): Promise<EvaluationRead[]> => {
     const qs = params
-      ? "?" + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()
+      ? "?" +
+        new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined)
+            .map(([k, v]) => [k, String(v)]),
+        ).toString()
       : "";
     return apiFetch<EvaluationRead[]>(`/evaluations${qs}`);
   },
   getByTrace: (traceId: string): Promise<EvaluationRead> =>
     apiFetch<EvaluationRead>(`/evaluations/${traceId}`),
-  run: (traceId: string): Promise<{ trace_id: string; evaluation: EvaluationRead }> =>
+  run: (
+    traceId: string,
+  ): Promise<{ trace_id: string; evaluation: EvaluationRead }> =>
     apiFetch(`/evaluations/${traceId}/run`, { method: "POST" }),
 };
 
@@ -89,10 +99,26 @@ export const reviewsApi = {
     apiFetch<ReviewRead[]>(`/reviews${verdict ? `?verdict=${verdict}` : ""}`),
   pending: (): Promise<PendingReviewItem[]> =>
     apiFetch<PendingReviewItem[]>("/reviews/pending"),
-  submit: (traceId: string, body: { verdict: string; reviewer_notes?: string }): Promise<ReviewRead> =>
-    apiFetch<ReviewRead>(`/reviews/${traceId}`, { method: "POST", body: JSON.stringify(body) }),
-  update: (traceId: string, body: Partial<{ verdict: string; reviewer_notes: string; promoted_to_regression: boolean }>): Promise<ReviewRead> =>
-    apiFetch<ReviewRead>(`/reviews/${traceId}`, { method: "PATCH", body: JSON.stringify(body) }),
+  submit: (
+    traceId: string,
+    body: { verdict: string; reviewer_notes?: string },
+  ): Promise<ReviewRead> =>
+    apiFetch<ReviewRead>(`/reviews/${traceId}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (
+    traceId: string,
+    body: Partial<{
+      verdict: string;
+      reviewer_notes: string;
+      promoted_to_regression: boolean;
+    }>,
+  ): Promise<ReviewRead> =>
+    apiFetch<ReviewRead>(`/reviews/${traceId}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
 };
 
 // ---------------------------------------------------------------------------
@@ -103,6 +129,14 @@ export const regressionApi = {
     apiFetch<RegressionCaseRead[]>("/regression"),
   get: (id: string): Promise<RegressionCaseRead> =>
     apiFetch<RegressionCaseRead>(`/regression/${id}`),
+  compare: (
+    caseId: string,
+    body: { prompt_version_a: string; prompt_version_b: string },
+  ): Promise<CompareResult> =>
+    apiFetch<CompareResult>(`/regression/${caseId}/compare`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
 
 // ---------------------------------------------------------------------------
@@ -119,8 +153,7 @@ export const promptsApi = {
 // Health
 // ---------------------------------------------------------------------------
 export const healthApi = {
-  liveness: (): Promise<{ status: string }> =>
-    apiFetch("/health"),
+  liveness: (): Promise<{ status: string }> => apiFetch("/health"),
   db: (): Promise<{ status: string; database: string }> =>
     apiFetch("/health/db"),
 };
